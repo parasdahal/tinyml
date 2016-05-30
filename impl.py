@@ -1,26 +1,25 @@
 import numpy as np
-import linear_regression as lr
-import logistic_regression as lo
+import LinearRegression as lr
+import LogisticRegression as lo
 from sklearn import datasets
 
-"""
-x,y = datasets.make_regression(n_features=1,n_informative=1, noise=20, random_state=0)
-table=np.column_stack((x,y))
+# Linear Regression
 
-p = lr.linear_regression(table)
-p.gradient_descent(100000,0.001)
-p.plot_fit()
-"""
-#Logistic Regression
+X,y = datasets.make_regression(n_features=1,n_informative=1, noise=20, random_state=0)
+table=np.column_stack((X,y))
+
+p = lr.LinearRegression(table)
+p.gradient_descent(1000,0.01)
+p.plot_fit(1)
+
+# Logistic Regression Classification
 
 x,y = datasets.make_classification(n_features=2, n_redundant=0, n_informative=2,n_clusters_per_class=1)
 table=np.column_stack((x,y))
 
-p = lo.logistic_regression(table)
-print p.gradient_descent(100,0.01)
-p.plot_data()
+p = lo.LogisticRegression(table)
+print p.gradient_descent(10000,0.03)
+print p.accuracy()
 p.plot_fit()
-if p.predict(np.array([0,0]))>0.5:
-	print 1
-else:
-	print 0
+
+
