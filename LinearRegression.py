@@ -94,7 +94,6 @@ class LinearRegression:
         """
         # add a column of ones to the prediction data to make it compatible with parameter array
         data = np.column_stack((np.ones(data.shape[0]), data))
-       
         return np.dot(data, self.theta)
 
     def accuracy(self):

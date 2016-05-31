@@ -36,12 +36,21 @@ class LogisticRegression:
         ----------
         val : float
               Value of which sigmoid is to calculate
+        Returns
+        -------
+        val : float
+            Sigmoid value of the parameter
         
         """
         return float(1) / (1 + np.exp(-val))
 
     def compute_cost(self):
         """Computes cost based on the current values of the parameters
+        
+        Returns
+        -------
+        cost : float
+            Cost of the selection of current set of parameters
         
         """
         hypothesis = LogisticRegression.sigmoid(np.dot(self.X, self.theta))
@@ -62,7 +71,11 @@ class LogisticRegression:
             The maximum number of iterations allowed to run before the algorithm terminates
         alpha : float
             The learning rate for the algorithm
-            
+        
+        Returns
+        -------
+        self.theta: ndarray(self.features)
+            Array of parameters after running the algorithm
         """
         for i in range(0, num_iters):
             hypothesis = LogisticRegression.sigmoid(np.dot(self.X, self.theta))
@@ -116,19 +129,17 @@ class LogisticRegression:
     def plot_data(self):
         """Plot the training data in X array
         """
-        if self.num_features == 3:
-            from matplotlib import pyplot as plt
-            plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
+        from matplotlib import pyplot as plt
+        plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
         plt.show()
 
     def plot_fit(self):
         """Plot the training data in X array along with decision boundary
         """
-        if self.num_features == 3:
-            from matplotlib import pyplot as plt
-            x1 = np.linspace(self.X.min()-1, self.X.max()+1, 100)
-            x2 = -(self.theta[1] * x1 + self.theta[0]) / self.theta[2]
-            plt.plot(x1, x2, color='r', label='decision boundary');
-            plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
-            plt.legend()
-            plt.show()
+        from matplotlib import pyplot as plt
+        x1 = np.linspace(self.X.min()-1, self.X.max()+1, 100)
+        x2 = -(self.theta[1] * x1 + self.theta[0]) / self.theta[2]
+        plt.plot(x1, x2, color='r', label='decision boundary');
+        plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
+        plt.legend()
+        plt.show()
