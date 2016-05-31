@@ -5,25 +5,28 @@ class LogisticRegression:
     Classification using logistic regression
     """
 
-    def __init__(self, table):
+    def __init__(self, table,reg=False,lamda=0):
         """Initializes Class for Logistic Regression
         
         Parameters
         ----------
-        X : ndarray(n-rows,m-features)
-            Numerical training data.
-        y: ndarray(n-rows,)
-            Interger training labels.
+        table : ndarray(n-rows,m-features + 1)
+            Numerical training data, last column as training labels
+        reg : Boolean
+            Set True to enable regularization, false by default
             
         """
+        #Regularization Parameters
+        self.reg=reg
+        self.lamda=lamda
+        #training data
         self.table = table
-        self.num_training = np.shape(table)[0]
-        self.X = np.delete(table, -1, 1)
-        self.X = np.insert(self.X, 0, np.ones(self.num_training), axis=1)
-        print self.X
+        self.num_training = np.shape(table)[0]  #num of rows in the training data
+        self.X = np.delete(table, -1, 1)    #remove last column from traing data to get feature data
+        self.X = np.insert(self.X, 0, np.ones(self.num_training), axis=1)   #add a column of ones to feature data
         self.num_features = np.shape(self.X)[1]
-        self.y = table[:, self.num_features - 1]
-        self.theta = np.zeros(self.num_features)
+        self.y = table[:, self.num_features - 1]    #extract last column from training data table
+        self.theta = np.zeros(self.num_features)    #craete an array of parameters initialzing them to 1
 
     @staticmethod
     def sigmoid(val):
@@ -42,7 +45,12 @@ class LogisticRegression:
         
         """
         hypothesis = LogisticRegression.sigmoid(np.dot(self.X, self.theta))
+        #regularization term
+        reg = (self.lamda/2*self.num_training)*np.sum(np.power(self.theta,2)) 
         cost = -(np.sum(self.y * np.log(hypothesis) + (1 - self.y) * (np.log(1 - hypothesis)))) / self.num_training
+        #if regularization is true, add regularization term and return cost
+        if self.reg:
+            return cost + reg
         return cost
 
     def gradient_descent(self, num_iters=1000, alpha=0.01):
@@ -62,7 +70,12 @@ class LogisticRegression:
             cost = self.compute_cost()
             print "Iteration: %d Cost: %f" % (i, cost)
             gradient = np.dot(self.X.T, loss) / self.num_training
-            self.theta = self.theta - alpha * gradient
+            #regularization term
+            reg = (1 - (self.lamda*alpha)/self.num_training)
+            if self.reg:
+                self.theta = self.theta*reg - alpha * gradient
+            else:
+                self.theta = self.theta - alpha * gradient
         return self.theta
 
     def predict(self, data, prob=False):
@@ -87,8 +100,14 @@ class LogisticRegression:
         return hypothesis
 
     def accuracy(self):
-        """Returns percentage of correct predictions by the model on training data
+        """Calculates percentage of correct predictions by the model on training data
+        
+        Returns
+        -------
+        accuracy : float
+            Percentage of correct predictions on the features of training data
         """
+        #delete extra ones column that was added
         x = np.delete(self.X, 0, 1)
         predicted = self.predict(x)
         match = float(np.sum(self.y == predicted))
