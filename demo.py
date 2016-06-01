@@ -20,7 +20,7 @@ table = np.loadtxt("datasets/ex2data2.txt",delimiter=",")
 
 #table=np.column_stack((x,y))
 
-p = lo.LogisticRegression(table,reg=True,lamda=0,degree=3)
+p = lo.LogisticRegression(table,reg=False,lamda=0,degree=3)
 print p.gradient_descent(5000,0.01)
 print p.accuracy()
 p.plot_fit()

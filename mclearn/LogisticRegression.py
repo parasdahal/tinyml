@@ -15,20 +15,24 @@ class LogisticRegression:
         reg : Boolean
             Set True to enable regularization, false by default
         degree: int
-            Degree of polynomial to fit to the data
+            Degree of polynomial to fit to the data. Default is 1.
             
         """
-        #Regularization Parameters
+        # Regularization Parameters
         self.reg=reg
         self.lamda=lamda
-        #training data
+        # training data
         self.degree=degree
         self.table = table
-        self.num_training = np.shape(table)[0]  #num of rows in the training data
+        # num of rows in the training data
+        self.num_training = np.shape(table)[0] 
+        # map the features according to the degree of the fit
         self.X = self.map_features()
         self.num_features = np.shape(self.X)[1]
-        self.y = table[:,-1]    #extract last column from training data table
-        self.theta = np.zeros(self.num_features)    #craete an array of parameters initialzing them to 1
+        # extract last column from training data table
+        self.y = table[:,-1]
+        # craete an array of parameters initialzing them to 1
+        self.theta = np.zeros(self.num_features)
         
     def map_features(self):
         """
@@ -36,6 +40,7 @@ class LogisticRegression:
         """
         X = self.table[:,0]
         Y = self.table[:,1]
+        # First column is ones for calculation of intercept
         features = np.ones(self.num_training)
         
         for i in range(1,self.degree+1):
@@ -161,7 +166,8 @@ class LogisticRegression:
         """
         from matplotlib import pyplot as plt
         x1 = np.linspace(self.table.min(), self.table.max(), 100)
-        x2 = np.polyval(self.theta,x1)
+        #reverse self.theta as it requires coeffs from highest degree to constant term
+        x2 = np.polyval(np.poly1d(self.theta[::-1]),x1)
         plt.plot(x1, x2, color='r', label='decision boundary');
         plt.scatter(self.X[:, 1], self.X[:, 2], s=40, c=self.y, cmap=plt.cm.Spectral)
         plt.legend()
