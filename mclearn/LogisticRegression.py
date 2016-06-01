@@ -5,7 +5,7 @@ class LogisticRegression:
     Classification using logistic regression
     """
 
-    def __init__(self, table,reg=False,lamda=0):
+    def __init__(self, table,reg=False,lamda=0,degree = 1):
         """Initializes Class for Logistic Regression
         
         Parameters
@@ -14,20 +14,36 @@ class LogisticRegression:
             Numerical training data, last column as training labels
         reg : Boolean
             Set True to enable regularization, false by default
+        degree: int
+            Degree of polynomial to fit to the data
             
         """
         #Regularization Parameters
         self.reg=reg
         self.lamda=lamda
         #training data
+        self.degree=degree
         self.table = table
         self.num_training = np.shape(table)[0]  #num of rows in the training data
-        self.X = np.delete(table, -1, 1)    #remove last column from traing data to get feature data
-        self.X = np.insert(self.X, 0, np.ones(self.num_training), axis=1)   #add a column of ones to feature data
+        self.X = self.map_features()
         self.num_features = np.shape(self.X)[1]
-        self.y = table[:, self.num_features - 1]    #extract last column from training data table
+        self.y = table[:,-1]    #extract last column from training data table
         self.theta = np.zeros(self.num_features)    #craete an array of parameters initialzing them to 1
-
+        
+    def map_features(self):
+        """
+        Generates polynomial features based on the degree
+        """
+        X = self.table[:,0]
+        Y = self.table[:,1]
+        features = np.ones(self.num_training)
+        
+        for i in range(1,self.degree+1):
+                for j in range(0,i+1):
+                    col = np.power(X,i-j)*np.power(Y,j)
+                    features = np.column_stack((features,col))
+        return features
+        
     @staticmethod
     def sigmoid(val):
         """Computes sigmoid function of input value
@@ -54,8 +70,10 @@ class LogisticRegression:
         
         """
         hypothesis = LogisticRegression.sigmoid(np.dot(self.X, self.theta))
+        #new ndarray to prevent intercept from theta array to be changed
+        theta=np.delete(self.theta,0)
         #regularization term
-        reg = (self.lamda/2*self.num_training)*np.sum(np.power(self.theta,2)) 
+        reg = (self.lamda/2*self.num_training)*np.sum(np.power(theta,2)) 
         cost = -(np.sum(self.y * np.log(hypothesis) + (1 - self.y) * (np.log(1 - hypothesis)))) / self.num_training
         #if regularization is true, add regularization term and return cost
         if self.reg:
@@ -77,16 +95,21 @@ class LogisticRegression:
         self.theta: ndarray(self.features)
             Array of parameters after running the algorithm
         """
+        old_cost=0
         for i in range(0, num_iters):
             hypothesis = LogisticRegression.sigmoid(np.dot(self.X, self.theta))
             loss = hypothesis - self.y
             cost = self.compute_cost()
+            #if the cost is equal for two iterations, break from the loop
+            if cost==old_cost:
+                break
+            old_cost = cost
             print "Iteration: %d Cost: %f" % (i, cost)
             gradient = np.dot(self.X.T, loss) / self.num_training
             #regularization term
-            reg = (1 - (self.lamda*alpha)/self.num_training)
+            reg = (self.lamda/self.num_training)*self.theta
             if self.reg:
-                self.theta = self.theta*reg - alpha * gradient
+                self.theta = self.theta - alpha * (gradient+reg)
             else:
                 self.theta = self.theta - alpha * gradient
         return self.theta
@@ -130,16 +153,16 @@ class LogisticRegression:
         """Plot the training data in X array
         """
         from matplotlib import pyplot as plt
-        plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
+        plt.scatter(self.X[:, 1], self.X[:, 2], s=40, c=self.y, cmap=plt.cm.Spectral)
         plt.show()
 
     def plot_fit(self):
         """Plot the training data in X array along with decision boundary
         """
         from matplotlib import pyplot as plt
-        x1 = np.linspace(self.X.min()-1, self.X.max()+1, 100)
-        x2 = -(self.theta[1] * x1 + self.theta[0]) / self.theta[2]
+        x1 = np.linspace(self.table.min(), self.table.max(), 100)
+        x2 = np.polyval(self.theta,x1)
         plt.plot(x1, x2, color='r', label='decision boundary');
-        plt.scatter(self.X[:, -2], self.X[:, -1], s=40, c=self.y, cmap=plt.cm.Spectral)
+        plt.scatter(self.X[:, 1], self.X[:, 2], s=40, c=self.y, cmap=plt.cm.Spectral)
         plt.legend()
         plt.show()

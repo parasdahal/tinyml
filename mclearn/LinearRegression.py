@@ -66,10 +66,15 @@ class LinearRegression:
             Theta (parameters) values after gradient_descent
 
         """
+        old_cost=0
         for i in range(0, num_iters):
             hypothesis = np.dot(self.X, self.theta)
             loss = hypothesis - self.y
             cost = self.compute_cost()
+            #if the cost is equal for two iterations, break from the loop
+            if cost==old_cost:
+                break
+            old_cost = cost
             print "Iteration: %d Cost: %f" % (i, cost)
             gradient = np.dot(self.X.T, loss) / self.num_training
             #regularization term
