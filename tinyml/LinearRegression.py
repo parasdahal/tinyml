@@ -75,7 +75,7 @@ class LinearRegression:
             if cost==old_cost:
                 break
             old_cost = cost
-            print "Iteration: %d Cost: %f" % (i, cost)
+            #print"Iteration: %d Cost: %f" % (i, cost)
             gradient = np.dot(self.X.T, loss) / self.num_training
             #regularization term
             reg = (1 - (self.lamda*alpha)/self.num_training)
