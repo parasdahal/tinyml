@@ -1,8 +1,8 @@
 import numpy as np 
 
-class NeuralNetwork:
+class FullyConnectedNN:
 	"""
-		General Neural Network implementation
+		General Fully connected Neural Network implementation
 	"""
 
 	def __init__(self,shape,activation_function="sigmoid"):
@@ -85,9 +85,9 @@ class NeuralNetwork:
 			delta.append(self.neurons[last] - y[k])	
 			# looping from the last layer to second layer (reverse)
 			for i in range(len(self.neurons),1,-1):
-				d = np.multiply(np.dot(self.neurons[].transpose(),delta[-j]),np.multiply(self.neurons[i],(1 - self.neurons[i])))
+				d = np.multiply(np.dot(self.neurons[].transpose(),delta[-j]),np.multiply(self.neurons[i,(1 - self.neurons[i])]))
 				delta.append(i)
-				j++
+				j+=1
 
 
 
@@ -107,5 +107,5 @@ class NeuralNetwork:
 		if(self.activation_function == "sigmoid"):
 			return sigmoid
 
-NN = NeuralNetwork([2,2,2,1])
+NN = FullyConnectedNN([2,2,2,1])
 print(NN.forward_propagation([0.3,0.5]))
