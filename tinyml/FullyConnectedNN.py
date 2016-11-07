@@ -57,19 +57,39 @@ class FullyConnectedNN:
 
 		return (zs,activations)
 
-	def back_propagation(self):
+	def train(self,alpha):
+		
+		weights = list() # list of weights per each layer
+		biases = list() #list of biases for each layer
 
-		delta = list()	# store the errors
-		gradient = list()	#store the gradient values
-		last = len(self.neurons)-1
-		for k in range(0,m):
-			j=1
-			delta.append(self.neurons[last] - self.y[k])	
-			# looping from the last layer to second layer (reverse)
-			for i in range(len(self.neurons),1,-1):
-				d = np.multiply(np.dot(self.neurons[i].transpose(),delta[-j]),np.multiply(self.neurons[i],(1 - self.neurons[i])))
-				delta.append(i)
-				j+=1
+		for i in range(1,len(shape)):
+			# size of weight matrix for each layer => (num of units in this layer * num of units in next layer)
+			self.weights.append(np.random.random_sample((shape[i-1],shape[i])))
+			self.biases.append(np.zeros((1,shape[i])))
+		
+		temp_weight = weights
+		temp_bias = biases
+		# iterate over all rows in the dataset
+		for x,y in zip(self.X,self.y):
+
+			zs,activations = self.predict(x)
+			#last layer
+			delta = activations[-1] - y
+			temp_weight[-1] = np.dot(delta,activations[-1])
+			temp_bias[-1] = delta.sum()
+			# peroform backward pass for each layer except last
+			for l in range(1,len(self.shape)):
+				delta = np.dot(delta,self.weights[-l]) * (activations[-l]*(1-activations[-l]))
+				temp_weight[-l] = delta.activations[-l]
+				temp_bias[-l] = delta.sum()
+
+			for weight,d in zip(weights,temp_weight):
+				weight += -alpha*d
+			
+			for bias,d in z(weights,temp_bias):
+				bias += -alpha*d
+		
+		return (weights,biases)
 
 
 	def activation_func(self):
