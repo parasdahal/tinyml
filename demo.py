@@ -17,7 +17,7 @@ from sklearn import datasets
 x,y = datasets.make_classification(n_features=2, n_redundant=0, n_informative=2,n_clusters_per_class=1)
 table=np.column_stack((x,y))
 
-p = lo.LogisticRegression(table,reg=True,lamda=5,degree=2)
+p = lo.LogisticRegression(table,reg=True,lamda=0.5)
 print(p.gradient_descent(num_iters=5000,alpha=0.01))
 print(p.accuracy())
 p.plot_fit()
