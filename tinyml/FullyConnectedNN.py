@@ -1,88 +1,160 @@
 import numpy as np
 import random
+import math
+import datetime
 
-class NN:
+class CrossEntropyCost:
 
-	def __init__(self,sizes):
+    @staticmethod
+    def fn(a,y):
+        return np.sum( np.nan_to_num( -y * np.log(a) - (1-y) * np.log(1-a) ) )
+    
+    @staticmethod
+    def delta(a,y):
+        return (a-y)
 
-		self.sizes = sizes
-		self.weights = [np.random.randn(x,y) for x,y in zip(sizes[1:],sizes[:-1])]
-		self.biases = [np.random.randn(x,1) for x in sizes[1:]]
+class FullyConnectedNN:
 
-	def forwardprop(self,a):
+    def __init__(self, sizes, cost=CrossEntropyCost):
+        # TODO: Get datasets here and parallelize them into RDD
+        logger.info("Starting up network")
+        self.num_layers = len(sizes)
+        self.sizes = sizes
+        self.initialize_weights()
+        self.cost = cost
+    
+    def initialize_weights(self):
+        """Initializing weights as Gaussian random variables with mean
+        0 and standard deviation 1/sqrt(n) where n is the number
+        of weights connecting to the same neuron.
 
-		for w,b in zip(self.weights,self.biases):
-			z = np.dot(w,a) + b
-			a = self.sigmoid(z)
-		return a
+        """
+        self.biases = [np.random.randn(y,1) for y in self.sizes[1:]]
+        self.weights = [np.random.randn(y,x)/np.sqrt(x) for x,y in zip(self.sizes[:-1],self.sizes[1:])]
 
-	def train(self,training_data,epoch,batch_size):
-		print('Starting Training')
-		print('Batch Size:',batch_size)
-		for current_epoch in range(epoch):
-			random.shuffle(training_data)
-			print('Training Epoch:',current_epoch+1)
-			batches = [training_data[k:k+batch_size] for k in range(0, len(training_data), batch_size)]
-			for batch in batches:
-				self.update_batch(batch)
+    def feed_forward(self,a):
+        
+        for b,w in zip(self.biases,self.weights):
+            a = self.sigmoid(np.dot(w,a)+b)
+        return a
+    
+    def backprop(self,x,y):
+        
+        # biases and weights calculated by backprop
+        b = [np.zeros(bias.shape) for bias in self.biases]
+        w = [np.zeros(weight.shape) for weight in self.weights]
+        
+        # forward pass
+        activation = x
+        activations = [x]
+        zs = []
+        for bias,weight in zip(self.biases,self.weights):
+            z = np.dot(weight, activation) + bias
+            zs.append(z)
+            activation = self.sigmoid(z)
+            activations.append(activation)
+        # output error
+        delta = (self.cost).delta(activations[-1],y)
+        b[-1] = delta
+        w[-1] = np.dot(delta,activations[-2].transpose())
 
-	def update_batch(self,batch):
+        # backpropagate
+        for l in xrange(2,self.num_layers):
+            z = zs[-l]
+            sp = self.sigmoid_prime(z)
+            delta = np.dot(self.weights[-l+1].transpose(),delta) * sp
+            # store the derrivative terms in the bias and weight list
+            b[-l] = delta
+            w[-l] = np.dot(delta,activations[-l-1].transpose())
+        
+        return (b,w)
+    
+    def gd_mini_batch(self,mini_batch,alpha,lmbda,n):
+        """Update the weights and biases of the netwrok by applying
+        gradient descent on each mini batch. Mini batch is a list
+        of tuple (x,y)
 
-		ALPHA = 0.1
-		weight = [np.zeros(w.shape) for w in self.weights]
-		bias = [np.zeros(b.shape) for b in self.biases]
+        """
+        biases = [np.zeros(b.shape) for b in self.biases]
+        weights = [np.zeros(w.shape) for w in self.weights]
+        
+        for x, y in mini_batch:
+            # get derrivative terms using backprop
+            # TODO: delta_b,delta_w = mini_batch.map(lambda x,y: self.backprop(x,y))
+            # store these deltas and accumulate weights and biases
+            delta_b, delta_w = self.backprop(x,y)
+            # accumulate the weights and biases
+            biases = [nb + db for nb, db in zip(biases,delta_b)]
+            weights = [nw + dw for nw, dw in zip(weights,delta_w)]
+        
+        # update network using gradient descent update rule
+        self.biases = [b - (alpha/len(mini_batch))*nb 
+                        for b, nb in zip(self.biases, biases)]
+        self.weights = [(1 - (alpha*lmbda/n))*w - (alpha/len(mini_batch))*nw
+                        for w,nw in zip(self.weights, weights)]
+    
+    def SGD(self,training_data,epochs,mini_batch_size,alpha,lmbda,evaluation_data):
+        """Train the network using mini-batch stochastic gradient descent
 
-		for X,y in batch:
-			delta_w , delta_b = self.backprop(X,y)
-			weight = [wb+w for wb,w in zip(delta_w,weight)]
-			bias = [db+b for db,b in zip(delta_b,bias)]
-		
-		self.biases = [b - (ALPHA)/len(batch)*nb for b,nb in zip(self.biases,bias)]
-		self.weights = [w - (ALPHA/len(batch))*nw for w,nw in zip(self.weights,weight)]
+        """
+        n = len(training_data)
+        n_data = len(evaluation_data)
 
-	def backprop(self,X,y):
+        evaluation_cost = []
+        evaluation_accuracy = []
+        training_cost = []
+        training_accuracy = []
+        for i in xrange(epochs):
+            random.shuffle(training_data)
+            mini_batches = [training_data[k:k+mini_batch_size]
+                            for k in xrange(0,n,mini_batch_size)]
+            for mini_batch in mini_batches:
+                self.gd_mini_batch(mini_batch,alpha,lmbda,n)
+            logger.info("Epoch "+ str(i) +" training complete")
+            # training cost and accuracy
+            cost = self.total_cost(training_data,lmbda)
+            training_cost.append(cost)
+            logger.info("Cost on training data: "+str(cost))
+            accuracy = self.accuracy(training_data)
+            training_accuracy.append(accuracy)
+            logger.info("Accuracy on training data: "+str(accuracy)+"/"+str(n))
+            # evaluation cost and accuracy
+            cost = self.total_cost(evaluation_data,lmbda)
+            logger.info("Cost on evaluation data: "+str(cost))
+            evaluation_cost.append(cost)
+            accuracy = self.accuracy(evaluation_data)
+            evaluation_accuracy.append(accuracy)
+            logger.info("Accuracy on evaluation data: "+str(accuracy)+"/"+str(n_data))
+        
+        return evaluation_cost,evaluation_accuracy,training_cost,training_accuracy
 
-		w = [np.zeros(w.shape) for w in self.weights]
-		b = [np.zeros(b.shape) for b in self.biases]
+    def accuracy(self,data):
+        """Returns the number of input in data for which neural network 
+        outputs the correct result.
+        """
+        results = [(np.argmax(self.feed_forward(x)),np.argmax(y)) for(x, y) in data]
+        return sum( int(x == y) for(x,y) in results)
 
-		activation = X
-		activations = [X]
-		zs = []
-		# forward pass
-		for we,be in zip(self.weights,self.biases):
-			z=np.dot(we,activation)+be
-			activation = self.sigmoid(z)
-			zs.append(z)
-			activations.append(activation)
+    def total_cost(self,data,lmbda):
+        """Return the total cost of the network for dataset
+        """
+        cost = 0.0
+        for x, y in data:
+            a = self.feed_forward(x)
+            cost += self.cost.fn(a,y)/len(data)
+        # add regularization
+        cost += 0.5*(lmbda/len(data))*sum( np.linalg.norm(w)**2 for w in self.weights )
+        return cost
 
-		# output layer error
-		delta = self.cost_derrivative(activations[-1],y)*self.sigmoid_prime(zs[-1])
-		w[-1] = np.dot(delta,activations[-2].transpose())
-		b[-1] = delta
-
-		# propagate throuh rest of the layers
-		for l in range(2,len(self.sizes)):
-			z = zs[-l]
-			delta = np.dot(self.weights[-l+1].transpose(),delta)*self.sigmoid_prime(z)
-			b[-l] = delta
-			w[-l] = np.dot( delta, activations[-l-1].transpose())
-
-		return w,b
-
-	def sigmoid(self,z):
-		return 1.0/(1.0+np.exp(-z))
-
-	def sigmoid_prime(self,z):
-		return self.sigmoid(z)*(1-self.sigmoid(z))
-
-	def cost_derrivative(self,a,y):
-		return a-y
-
-
-from sklearn import datasets
-
-digits = datasets.load_digits()
-training_data = [(x,y) for x,y in zip(digits['data'],digits['target'])]
-
-net = NN([64,64,10])
-net.train(training_data,10,100)
+    def vector_result(self,j):
+        """Convert output value into network output vector
+        """
+        vec = np.zeros((self.sizes[-1],1))
+        vec[j] = 1.0
+        return vec
+    
+    def sigmoid(self,z):
+        return 1.0/(1.0+np.exp(-z))
+    
+    def sigmoid_prime(self,z):
+        return self.sigmoid(z)*(1-self.sigmoid(z))

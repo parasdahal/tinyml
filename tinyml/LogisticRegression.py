@@ -5,7 +5,7 @@ class LogisticRegression:
     Classification using logistic regression
     """
 
-    def __init__(self, table,reg=False,lamda=0,degree = 1):
+    def __init__(self,table,reg=False,lamda=0,degree = 1):
         """Initializes Class for Logistic Regression
         
         Parameters
