@@ -3,7 +3,7 @@ import numpy as np
 
 class LinearRegression:
     """
-    Compute linear regression problems on single or multiple features
+    Compute linear regression on single or multiple features
     """
 
     def __init__(self, table,reg=False,lamda=0):

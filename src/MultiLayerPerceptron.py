@@ -4,6 +4,9 @@ import math
 import datetime
 
 class CrossEntropyCost:
+    """
+    Cross Entropy class with cost function and error 
+    """
 
     @staticmethod
     def fn(a,y):
@@ -14,8 +17,21 @@ class CrossEntropyCost:
         return (a-y)
 
 class MultiLayerPerceptron:
+    """
+    A fully connected neural network with stochastic gradient descent and 
+    various diagnostic visualizations.
+    """
 
     def __init__(self, sizes, cost=CrossEntropyCost):
+        """Initializes the network parameters
+
+        Parameters
+        ----------
+        sizes : List
+            A list with number of neurons per each layer
+        cost : object
+            Cost object to use for cost calculation
+        """
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.initialize_weights()
@@ -31,13 +47,20 @@ class MultiLayerPerceptron:
         self.weights = [np.random.randn(y,x)/np.sqrt(x) for x,y in zip(self.sizes[:-1],self.sizes[1:])]
 
     def feed_forward(self,a):
+        """Carry out a forward pass through the network and return
+        the activation value of the last layer
+        
+        """
         
         for b,w in zip(self.biases,self.weights):
             a = self.sigmoid(np.dot(w,a)+b)
         return a
     
     def backprop(self,x,y):
+        """Perform backward pass using backpropagation on a single
+        item of dataset and return the weights and biases  
         
+        """
         # biases and weights calculated by backprop
         b = [np.zeros(bias.shape) for bias in self.biases]
         w = [np.zeros(weight.shape) for weight in self.weights]
@@ -92,6 +115,21 @@ class MultiLayerPerceptron:
     def SGD(self,training_data,epochs,mini_batch_size,alpha,lmbda,evaluation_data):
         """Train the network using mini-batch stochastic gradient descent
 
+        Parameters
+        ----------
+        training_data : ndarray
+            Numpy array of training data
+        epochs : int
+            Number of epochs to train the network
+        mini_batch_size : int
+            The size of each mini batch to use for SGD
+        alpha : float
+            Learning Rate 
+        lmbda : float
+            Regularization parameter
+        evaluation_data : ndarray
+            Validation or test dataset similar to training_data
+
         """
         n = len(training_data)
         n_data = len(evaluation_data)
@@ -143,7 +181,7 @@ class MultiLayerPerceptron:
         return cost
 
     def one_hot_encoded_result(self,j):
-        """Convert output value into network output vector
+        """Convert output value into one hot encoded output vector
         """
         vec = np.zeros((self.sizes[-1],1))
         vec[j] = 1.0
@@ -156,7 +194,20 @@ class MultiLayerPerceptron:
         return self.sigmoid(z)*(1-self.sigmoid(z))
 
     def plot(self,evaluation_cost,evaluation_accuracy,training_cost,training_accuracy):
-        
+        """Visualize the cost and accuracy on training and evaluation data
+
+        Parameters
+        ----------
+        evaluation_cost : list
+            List of cost on evaluation data for each epoch
+        evaluation_accuracy : list
+            List of accuracy on evaluation data for each epoch
+        training_cost : list
+            List of cost on training data for each epoch
+        training_accuracy : list
+            List of accuracy on training data for each epoch
+            
+        """
         import matplotlib.pyplot as plt
         from matplotlib.ticker import MaxNLocator
 
