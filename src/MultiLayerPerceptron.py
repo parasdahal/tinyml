@@ -13,11 +13,9 @@ class CrossEntropyCost:
     def delta(a,y):
         return (a-y)
 
-class FullyConnectedNN:
+class MultiLayerPerceptron:
 
     def __init__(self, sizes, cost=CrossEntropyCost):
-        # TODO: Get datasets here and parallelize them into RDD
-        logger.info("Starting up network")
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.initialize_weights()
@@ -80,8 +78,6 @@ class FullyConnectedNN:
         
         for x, y in mini_batch:
             # get derrivative terms using backprop
-            # TODO: delta_b,delta_w = mini_batch.map(lambda x,y: self.backprop(x,y))
-            # store these deltas and accumulate weights and biases
             delta_b, delta_w = self.backprop(x,y)
             # accumulate the weights and biases
             biases = [nb + db for nb, db in zip(biases,delta_b)]
@@ -110,21 +106,21 @@ class FullyConnectedNN:
                             for k in xrange(0,n,mini_batch_size)]
             for mini_batch in mini_batches:
                 self.gd_mini_batch(mini_batch,alpha,lmbda,n)
-            logger.info("Epoch "+ str(i) +" training complete")
+            print("Epoch "+ str(i) +" training complete")
             # training cost and accuracy
             cost = self.total_cost(training_data,lmbda)
             training_cost.append(cost)
-            logger.info("Cost on training data: "+str(cost))
+            print("Cost on training data: "+str(cost))
             accuracy = self.accuracy(training_data)
             training_accuracy.append(accuracy)
-            logger.info("Accuracy on training data: "+str(accuracy)+"/"+str(n))
+            print("Accuracy on training data: "+str(accuracy)+"/"+str(n))
             # evaluation cost and accuracy
             cost = self.total_cost(evaluation_data,lmbda)
-            logger.info("Cost on evaluation data: "+str(cost))
+            print("Cost on evaluation data: "+str(cost))
             evaluation_cost.append(cost)
             accuracy = self.accuracy(evaluation_data)
             evaluation_accuracy.append(accuracy)
-            logger.info("Accuracy on evaluation data: "+str(accuracy)+"/"+str(n_data))
+            print("Accuracy on evaluation data: "+str(accuracy)+"/"+str(n_data))
         
         return evaluation_cost,evaluation_accuracy,training_cost,training_accuracy
 
@@ -146,7 +142,7 @@ class FullyConnectedNN:
         cost += 0.5*(lmbda/len(data))*sum( np.linalg.norm(w)**2 for w in self.weights )
         return cost
 
-    def vector_result(self,j):
+    def one_hot_encoded_result(self,j):
         """Convert output value into network output vector
         """
         vec = np.zeros((self.sizes[-1],1))
