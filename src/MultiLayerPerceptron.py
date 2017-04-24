@@ -154,3 +154,57 @@ class MultiLayerPerceptron:
     
     def sigmoid_prime(self,z):
         return self.sigmoid(z)*(1-self.sigmoid(z))
+
+    def plot(self,evaluation_cost,evaluation_accuracy,training_cost,training_accuracy):
+        
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import MaxNLocator
+
+        train_cost,eval_cost = [],[]
+        train_acc,eval_acc = [],[]
+        for i,cost in enumerate(training_cost):
+            train_cost.append((cost,i))
+        for i,cost in enumerate(evaluation_cost):
+            eval_cost.append((cost,i))
+        for i,acc in enumerate(training_accuracy):
+            train_acc.append((acc,i))
+        for i,acc in enumerate(evaluation_accuracy):
+            eval_acc.append((acc,i))
+        
+        np_train_cost = np.asarray(train_cost)
+        np_eval_cost = np.asarray(eval_cost)
+        np_train_acc = np.asarray(train_acc)
+        np_eval_acc = np.asarray(eval_acc)
+
+        plt.subplot(221)
+        plt.plot(np_train_cost[:,1],np_train_cost[:,0],linewidth=2)
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.title("Cost on training data")
+        plt.xlabel("No of epochs")
+        plt.ylabel("Cost")
+        plt.subplot(222)
+        plt.plot(np_eval_cost[:,1],np_eval_cost[:,0],linewidth=2)
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        plt.title("Cost on evaluation data")
+        plt.xlabel("No of epochs")
+        plt.ylabel("Cost")
+        plt.subplot(223)
+        plt.plot(np_train_acc[:,1],np_train_acc[:,0],linewidth=2)
+        plt.title("Accuracy on training data")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_ylim([80,100])
+        plt.xlabel("No of epochs")
+        plt.ylabel("Accuracy")
+        plt.subplot(224)
+        plt.plot(np_eval_acc[:,1],np_eval_acc[:,0],linewidth=2)
+        plt.title("Accuracy on evaluation data")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_ylim([80,100])
+        plt.xlabel("No of epochs")
+        plt.ylabel("Accuracy")
+        plt.tight_layout()
+        plt.show()
